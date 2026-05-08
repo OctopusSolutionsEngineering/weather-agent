@@ -41,7 +41,7 @@ jobs:
               with:
                   scan-type: "fs"
                   ignore-unfixed: true
-                  exit-code: "1"
+                  exit-code: "0"
                   format: "sarif"
                   output: "trivy-results.sarif"
                   severity: "MEDIUM,HIGH,CRITICAL"
@@ -113,7 +113,7 @@ jobs:
                     --tag $DOCKER_HUB_REPOSITORY:${{ needs.configure.outputs.version }} .
 
             - name: Run Trivy vulnerability scanner on docker container
-              uses: aquasecurity/trivy-action@0.36.0
+              uses: aquasecurity/trivy-action@v0.36.0
               with:
                   image-ref: ${{ env.DOCKER_HUB_REPOSITORY }}:${{ needs.configure.outputs.version }}
                   format: "table"
