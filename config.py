@@ -15,6 +15,10 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+"""Configuration loader with Azure Key Vault + env var fallback."""
+# ... (existing imports unchanged)
+
+
 class Settings(BaseSettings):
     """Application settings loaded from Azure Key Vault or env vars."""
     
@@ -24,21 +28,38 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     
-    # Key Vault config (read from env always)
-    azure_key_vault_url: Optional[str] = Field(
-        default=None,
-        description="e.g., https://my-vault.vault.azure.net",
+    # ===== Key Vault =====
+    azure_key_vault_url: Optional[str] = None
+    use_key_vault: bool = False
+    
+    # ===== App =====
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
+    log_level: str = "INFO"
+    
+    # ===== Caching =====
+    cache_backend: str = Field(
+        default="memory",
+        description="Cache backend: 'memory' or 'redis'",
     )
-    use_key_vault: bool = Field(
-        default=False,
-        description="Whether to load secrets from Key Vault",
+    redis_url: str = Field(
+        default="",
+        description="Redis URL, e.g., redis://localhost:6379/0",
+    )
+    cache_max_size: int = Field(
+        default=1000,
+        description="Max items in in-memory cache",
     )
     
-    # Application secrets/config (loaded from KV or env)
-    openai_api_key: str = Field(default="", description="OpenAI API key")
-    openai_model: str = Field(default="gpt-4o-mini")
-    log_level: str = Field(default="INFO")
-
+    # Per-tool TTLs (seconds)
+    cache_ttl_geocoding: int = Field(default=86400, description="24 hours")
+    cache_ttl_current_weather: int = Field(default=600, description="10 minutes")
+    cache_ttl_forecast: int = Field(default=1800, description="30 minutes")
+    cache_ttl_agent_response: int = Field(default=300, description="5 minutes")
+    
+    # Enable/disable cache layers
+    enable_tool_cache: bool = True
+    enable_response_cache: bool = True
 
 class KeyVaultLoader:
     """Lazy loader for Azure Key Vault secrets with caching."""
