@@ -1,13 +1,10 @@
 """Weather agent using LangChain + OpenAI."""
-import os
-from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
 
 from tools import WEATHER_TOOLS
-
-load_dotenv()
+from config import get_settings
 
 SYSTEM_PROMPT = """You are a helpful weather assistant.
 
@@ -21,19 +18,19 @@ When a user asks about weather:
 - Then call the appropriate weather tool
 - Respond in friendly, natural language
 - Include both Celsius and Fahrenheit when reporting temperatures
-  (F = C * 9/5 + 32)
 - Mention key conditions, wind, and any notable weather
 
-If a city can't be found, ask the user to clarify.
 Be concise but informative."""
 
 
 def build_agent() -> AgentExecutor:
     """Construct and return the weather agent executor."""
+    settings = get_settings()
+    
     llm = ChatOpenAI(
-        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        model=settings.openai_model,
         temperature=0,
-        api_key=os.getenv("OPENAI_API_KEY"),
+        api_key=settings.openai_api_key,
     )
     
     prompt = ChatPromptTemplate.from_messages([
@@ -53,7 +50,6 @@ def build_agent() -> AgentExecutor:
     )
 
 
-# Singleton instance
 _agent_executor = None
 
 def get_agent() -> AgentExecutor:
@@ -61,14 +57,3 @@ def get_agent() -> AgentExecutor:
     if _agent_executor is None:
         _agent_executor = build_agent()
     return _agent_executor
-
-
-if __name__ == "__main__":
-    # Quick CLI test
-    agent = get_agent()
-    while True:
-        query = input("\n🌤️  Ask about the weather (or 'quit'): ")
-        if query.lower() in {"quit", "exit"}:
-            break
-        result = agent.invoke({"input": query})
-        print(f"\n💬 {result['output']}")
