@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def _cached_tool_call(namespace: str, ttl: int, fn, *args, **kwargs):
     """Wrap a function call with cache lookup."""
     settings = get_settings()
-    if not settings.enable_tool_cache:
+    if not settings.feature_tool_cache:
         return fn(*args, **kwargs)
     
     cache = get_cache()
