@@ -1,0 +1,49 @@
+process_template "verify-container" {
+    name = "Verify container"
+    process_template_slug = "github-verify-attestations-docker"
+    version_mask = "2.X"
+
+    package_parameter "Template.SBOM.Artifact" {
+        feed = "octopus-server-built-in"
+        package_id = "weather-agent.sbom"
+    }
+
+    parameter "Template.Docker.Account" {
+        value = "Shared.Docker.Account"
+    }
+
+    parameter "Template.Git.AuthToken" {
+        value = "#{Shared.GitHub.Token}"
+    }
+
+    parameter "Template.Verify.WorkerPool" {
+        value = "WorkerPools-24"
+    }
+
+    parameter "Template.Verify.ExecutionContainerFeed" {
+        value = "Feeds-1028"
+    }
+
+    parameter "Template.Production" {
+        value = "Environments-22"
+    }
+}
+
+process_template "deploy-agent" {
+    name = "Deploy agent"
+    process_template_slug = "deploy-process-kubernetes-hosted-ai-agent"
+    version_mask = "3.X"
+
+    package_parameter "ProcessTemplate.Agent.Container" {
+        feed = "docker-hub"
+        package_id = "octopussolutionsengineering/weather-agent"
+    }
+
+    parameter "ProcessTemplate.TargetTags" {
+        value = "demo-k8s-cluster"
+    }
+
+    parameter "ProcessTemplate.ServiceAccount.ClientId" {
+        value = "77c7778c-c56d-48da-b022-a95d2fcc2143"
+    }
+}
