@@ -234,3 +234,52 @@ jobs:
               id: websiteattest
               with:
                   subject-checksums: subject.checksums.txt
+
+    octopus-create-release-and-deploy:
+        name: Create Release and Deploy to Development
+        needs:
+            [
+                configure,
+                scan,
+                create-gh-release,
+                build,
+                sbom,
+                create_attestations,
+            ]
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Login to Octopus Deploy
+              uses: OctopusDeploy/login@v1
+              with:
+                  server: ${{ env.OCTOPUS_URL }}
+                  service_account_id: ${{ env.OCTOPUS_SERVICE_ACCOUNT }}
+
+            - name: Create Octopus Release
+              uses: OctopusDeploy/create-release-action@v3
+              with:
+                  project: "Weather Agent"
+                  space: "${{ env.OCTOPUS_SPACE }}"
+                  release_number: "${{ needs.configure.outputs.version }}"
+                  package_version: "${{ needs.configure.outputs.version }}"
+                  git_ref: ${{ (github.ref_type == 'tag' && github.event.repository.default_branch ) || (github.head_ref || github.ref) }}
+
+            - name: Deploy Release to Development
+              id: deploy_a_release
+              uses: OctopusDeploy/deploy-release-action@v3
+              with:
+                  project: "Weather Agent"
+                  space: "${{ env.OCTOPUS_SPACE }}"
+                  release_number: "${{ needs.configure.outputs.version }}"
+                  environments: "Development"
+
+            - name: Await task in Octopus Deploy 🐙
+              id: await_task_in_octopus_deploy
+              uses: OctopusDeploy/await-task-action@v4
+              with:
+                  server_task_id: ${{ fromJson(steps.deploy_a_release.outputs.server_tasks)[0].serverTaskId }}
