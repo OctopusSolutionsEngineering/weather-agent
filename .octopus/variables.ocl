@@ -12,35 +12,35 @@ variable "Runbook.TestAgent.Prompt" {
     }
 }
 
-variable "Project.Config[weather-agent:sentinel]" {
+variable "config:sentinel" {
     value "v1" {}
 }
 
-variable "Project.Config[weather-agent:openai:model]" {
+variable "config:openai:model" {
     value "gpt-4o-mini" {}
 }
 
-variable "Project.Config[weather-agent:log-level]" {
+variable "config:log-level" {
     value "INFO" {}
 }
 
-variable "Project.Config[weather-agent:cache:ttl:geocoding]" {
+variable "config:cache:ttl:geocoding" {
     value "86400" {}
 }
 
-variable "Project.Config[weather-agent:cache:ttl:forecast]" {
+variable "config:cache:ttl:forecast" {
     value "1800" {}
 }
 
-variable "Project.Config[weather-agent:cache:ttl:current-weather]" {
+variable "config:cache:ttl:current-weather" {
     value "600" {}
 }
 
-variable "Project.Config[weather-agent:cache:ttl:agent-response]" {
+variable "config:cache:ttl:agent-response" {
     value "300" {}
 }
 
-variable "Project.Config[weather-agent:cache:redis-url]" {
+variable "config:cache:redis-url" {
     value "redis://redis.weather-agent.weather-agent-production.svc.cluster.local:6379/0" {
         environment = ["production"]
     }
@@ -56,6 +56,6 @@ variable "Project.Config[weather-agent:cache:redis-url]" {
     }
 }
 
-variable "Project.Config[weather-agent:cache:backend]" {
+variable "config:cache:backend" {
     value "redis" {}
 }
