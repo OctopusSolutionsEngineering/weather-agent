@@ -32,7 +32,7 @@ process_template "verify-container" {
 process_template "deploy-agent" {
     name = "Deploy agent"
     process_template_slug = "deploy-process-kubernetes-hosted-ai-agent"
-    version_mask = "4.X"
+    version_mask = "5.X"
 
     package_parameter "ProcessTemplate.Agent.Container" {
         feed = "docker-hub"
@@ -49,5 +49,9 @@ process_template "deploy-agent" {
 
     parameter "ProcessTemplate.Worker.Pool" {
         value = "WorkerPools-24"
+    }
+
+    parameter "ProcessTemplate.Worker.ContainerFeed" {
+        value = "Feeds-1028"
     }
 }
