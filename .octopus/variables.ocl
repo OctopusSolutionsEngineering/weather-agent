@@ -40,22 +40,22 @@ variable "config:cache:ttl:agent-response" {
     value "300" {}
 }
 
+variable "config:cache:backend" {
+    value "redis" {}
+}
+
 variable "config:cache:redis-url" {
-    value "redis://redis.weather-agent.weather-agent-production.svc.cluster.local:6379/0" {
+    value "redis://redis.weather-agent-production.svc.cluster.local:6379/0" {
         environment = ["production"]
     }
 
-    value "redis://redis.weather-agent.weather-agent-qa.svc.cluster.local:6379/0" {
+    value "redis://redis.weather-agent-qa.svc.cluster.local:6379/0" {
         description = ""
         environment = ["qa"]
     }
 
-    value "redis://redis.weather-agent.weather-agent-development.svc.cluster.local:6379/0" {
+    value "redis://redis.weather-agent-development.svc.cluster.local:6379/0" {
         description = ""
         environment = ["development"]
     }
-}
-
-variable "config:cache:backend" {
-    value "redis" {}
 }
