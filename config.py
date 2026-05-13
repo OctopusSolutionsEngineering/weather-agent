@@ -186,8 +186,11 @@ class AppConfigLoader:
         """Check a feature flag."""
         # The provider exposes feature flags via 'feature_management'
         features = self.provider.get("feature_management", {}).get("feature_flags", [])
+        logger.debug(f"Checking feature flag '{feature_name}' against {len(features)} flags")
         for f in features:
+            logger.debug(f"f -> {f}")
             if f.get("id") == feature_name:
+                logger.debug(f"Feature flag '{feature_name}' found: {f.get('enabled', False)}")
                 return f.get("enabled", False)
         return False
     
