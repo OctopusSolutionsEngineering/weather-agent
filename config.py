@@ -162,7 +162,7 @@ class AppConfigLoader:
             refresh_interval=self.refresh_interval,
             feature_flag_enabled=True,
             feature_flag_refresh_enabled=True,
-            feature_flag_selectors=[SettingSelector(key_filter=f"{self.FEATURE_FLAG_PREFIX}*", label_filter=self.label)],
+            feature_flag_selectors=[SettingSelector(key_filter=f"*", label_filter=self.label)],
             # Trim the prefix from keys for cleaner access:
             # weather-agent:openai:model → openai:model
             trim_prefixes=[self.KEY_PREFIX],
