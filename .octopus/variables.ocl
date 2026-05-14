@@ -59,3 +59,7 @@ variable "config:cache:redis-url" {
         environment = ["development"]
     }
 }
+
+variable "config:display:default-temperature-unit" {
+    value "Celsius" {}
+}
