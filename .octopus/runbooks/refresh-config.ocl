@@ -12,4 +12,14 @@ run_retention_policy {
     type = "Default"
 }
 
-process {}
+process {
+    process_template "run-a-process-template" {
+        name = "Run a Process Template"
+        process_template_slug = "runbook-refresh-config"
+        version_mask = "1.X"
+
+        parameter "ProcessTemplate.Target.Tags" {
+            value = "demo-k8s-cluster"
+        }
+    }
+}
