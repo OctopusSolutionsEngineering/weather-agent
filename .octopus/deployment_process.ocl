@@ -1,5 +1,4 @@
 process_template "verify-container" {
-    is_disabled = true
     name = "Verify container"
     process_template_slug = "github-verify-attestations-docker"
     version_mask = "2.X"
