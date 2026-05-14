@@ -15,49 +15,13 @@ run_retention_policy {
 }
 
 process {
-    step "test-agent" {
-        name = "Test agent"
-        properties = {
-            Octopus.Action.TargetRoles = "demo-k8s-cluster"
-        }
+    process_template "run-a-process-template" {
+        name = "Run a Process Template"
+        process_template_slug = "runbook-test-agent"
+        version_mask = "1.X"
 
-        action {
-            action_type = "Octopus.Script"
-            properties = {
-                Octopus.Action.RunOnServer = "false"
-                Octopus.Action.Script.ScriptBody = <<-EOT
-                    # Simple client for the Weather Agent API
-                    
-                    set -euo pipefail
-                    
-                    PROJECT=$(get_octopusvariable "Octopus.Project.Slug")
-                    ENVIRONMENT=$(get_octopusvariable "Octopus.Environment.Slug")
-                    
-                    BASE_URL="http://$PROJECT.$PROJECT-$ENVIRONMENT.svc.cluster.local:8000"
-                    QUERY=$(get_octopusvariable "Runbook.TestAgent.Prompt")
-                    
-                    response=$(curl -sS -X GET "$BASE_URL/ready" --max-time 120)
-                    
-                    echo ""
-                    echo "$response"
-                    echo ""
-                    
-                    echo "🌤️  You: $QUERY"
-                    
-                    response=$(curl -sS -X POST "$BASE_URL/ask" -H "Content-Type: application/json" -d "{\"query\": \"$QUERY\"}" --max-time 120)
-                    
-                    answer=$(echo "$response" | jq -r '.answer')
-                    latency=$(echo "$response" | jq -r '.latency_ms')
-                    
-                    echo ""
-                    echo "🤖 Agent: $answer"
-                    echo "⏱️  Latency: ${latency} ms"
-                    echo ""
-                    EOT
-                Octopus.Action.Script.ScriptSource = "Inline"
-                Octopus.Action.Script.Syntax = "Bash"
-                OctopusUseBundledTooling = "False"
-            }
+        parameter "ProcessTemplate.Target.Tags" {
+            value = "demo-k8s-cluster"
         }
     }
 }
