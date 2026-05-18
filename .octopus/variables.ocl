@@ -20,10 +20,6 @@ variable "config:openai:model" {
     value "gpt-4o-mini" {}
 }
 
-variable "config:log-level" {
-    value "INFO" {}
-}
-
 variable "config:cache:ttl:geocoding" {
     value "86400" {}
 }
@@ -62,4 +58,15 @@ variable "config:cache:redis-url" {
 
 variable "config:display:default-temperature-unit" {
     value "Celsius" {}
+}
+
+variable "config:log-level" {
+    value "INFO" {
+        environment = ["production", "qa"]
+    }
+
+    value "DEBUG" {
+        description = ""
+        environment = ["development"]
+    }
 }
