@@ -321,6 +321,7 @@ def get_app_config_loader() -> Optional[AppConfigLoader]:
     
     bootstrap = BootstrapSettings()
     if bootstrap.use_app_configuration and bootstrap.azure_appconfig_endpoint:
+        logger.info(f"Initializing App Configuration loader for {bootstrap.azure_appconfig_endpoint} and {bootstrap.appconfig_label}")
         _app_config_loader = AppConfigLoader(
             endpoint=bootstrap.azure_appconfig_endpoint,
             label=bootstrap.appconfig_label,
