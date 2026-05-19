@@ -316,17 +316,17 @@ def _populate_from_app_config(settings: Settings, loader: AppConfigLoader) -> No
 def get_app_config_loader() -> Optional[AppConfigLoader]:
     """Return the singleton App Config loader, if enabled."""
     
-    logger.info(f"Entering get_app_config_loader")
+    print(f"Entering get_app_config_loader")
 
     global _app_config_loader
     if _app_config_loader is not None:
-        logger.info(f"App Config loader already initialized")
+        print(f"App Config loader already initialized")
         return _app_config_loader
     
     bootstrap = BootstrapSettings()
-    logger.info(f"Bootstrap settings: {bootstrap.dict()}")
+    print(f"Bootstrap settings: {bootstrap.dict()}")
     if bootstrap.use_app_configuration and bootstrap.azure_appconfig_endpoint:
-        logger.info(f"Initializing App Configuration loader for {bootstrap.azure_appconfig_endpoint} and {bootstrap.appconfig_label}")
+        print(f"Initializing App Configuration loader for {bootstrap.azure_appconfig_endpoint} and {bootstrap.appconfig_label}")
         _app_config_loader = AppConfigLoader(
             endpoint=bootstrap.azure_appconfig_endpoint,
             label=bootstrap.appconfig_label,
