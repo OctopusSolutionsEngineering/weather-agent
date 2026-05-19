@@ -269,7 +269,7 @@ APPCONFIG_KEY_MAP = {
     "cache:ttl:current-weather": ("cache_ttl_current_weather", int),
     "cache:ttl:forecast": ("cache_ttl_forecast", int),
     "cache:ttl:agent-response": ("cache_ttl_agent_response", int),
-    "display:default-temperature-unit": ("default_temperature_unit", str),
+    #"display:default-temperature-unit": ("default_temperature_unit", str),
 }
 
 # Feature flag names in App Config → Settings attributes
