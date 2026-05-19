@@ -20,6 +20,9 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+# Enable Azure SDK debug logging
+logging.getLogger("azure.identity").setLevel(logging.DEBUG)
+logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.DEBUG)
 
 # ============================================================
 # Bootstrap settings (always from env — needed to find Azure)
@@ -359,7 +362,7 @@ def get_settings() -> Settings:
             
             loader = get_app_config_loader()
             if loader:
-                logger.info("Loading config from Azure App Configuration")
+                print("Loading config from Azure App Configuration")
                 # Trigger an initial refresh check
                 try:
                     loader.refresh()
