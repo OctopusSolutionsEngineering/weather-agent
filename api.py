@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from agent import get_agent
 from cache import get_cache
-from config import get_settings, refresh_settings, get_app_config_loader
+from config import get_settings, refresh_settings, get_app_config_loader, verify_azure_auth, get_auth_report
 
 
 @asynccontextmanager
