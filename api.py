@@ -1,4 +1,4 @@
-"""FastAPI service with startup auth verification."""
+"""FastAPI service with live config refresh."""
 import sys
 import logging
 from contextlib import asynccontextmanager
@@ -66,11 +66,25 @@ app = FastAPI(title="Weather Agent API", version="1.4.0", lifespan=lifespan)
 logger = logging.getLogger(__name__)
 
 
-# ===== Health & readiness endpoints =====
+class WeatherQuery(BaseModel):
+    query: str = Field(..., min_length=1, max_length=500)
+    bypass_cache: bool = False
+
+
+class WeatherResponse(BaseModel):
+    answer: str
+    latency_ms: int
+    cached: bool = False
+    model_used: str
+
+
+@app.get("/")
+def root():
+    return {"service": "weather-agent", "status": "ok"}
+
 
 @app.get("/health")
 def health():
-    """Liveness probe — process is alive."""
     return {"status": "healthy"}
 
 
@@ -105,7 +119,6 @@ def ready():
         },
     }
 
-
 @app.get("/auth/status")
 def auth_status():
     """Show the Azure authentication verification report."""
@@ -127,7 +140,6 @@ def auth_status():
         ],
     }
 
-
 @app.post("/auth/verify")
 def reverify_auth():
     """Manually re-run the auth verification (useful after credential rotation)."""
@@ -140,6 +152,7 @@ def reverify_auth():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/ask", response_model=WeatherResponse)
 def ask_weather(payload: WeatherQuery):
