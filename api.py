@@ -1,12 +1,15 @@
 """FastAPI service with live config refresh."""
 import sys
+import time
 import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
-from config import get_settings, verify_azure_auth, get_auth_report
+from agent import get_agent
 from cache import get_cache
+from config import get_settings, refresh_settings, get_app_config_loader
 
 
 @asynccontextmanager
