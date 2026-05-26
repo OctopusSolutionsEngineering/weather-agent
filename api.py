@@ -1,80 +1,145 @@
-"""FastAPI service with live config refresh."""
-import time
+"""FastAPI service with startup auth verification."""
+import sys
 import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
 
-from agent import get_agent
+from config import get_settings, verify_azure_auth, get_auth_report
 from cache import get_cache
-from config import get_settings, refresh_settings, get_app_config_loader
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    settings = get_settings()
+    # ===== Phase 1: Logging =====
     logging.basicConfig(
-        level=settings.log_level,
+        level="INFO",  # Will be overridden once config is loaded
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     logger = logging.getLogger(__name__)
-    logger.info(f"Starting weather-agent (model={settings.openai_model})")
-    logger.info(f"App Config enabled: {settings.use_app_configuration}")
-    logger.info(f"Feature flags: streaming={settings.feature_streaming}, "
-                f"response_cache={settings.feature_response_cache}")
     
-    get_cache()
-    get_agent()
-    logger.info("Agent ready ✓")
-    yield
+    logger.info("=" * 60)
+    logger.info("🌤️  Weather Agent starting up")
+    logger.info("=" * 60)
+    
+    # ===== Phase 2: Verify Azure auth (fail fast) =====
+    try:
+        report = verify_azure_auth(strict=True)
+        if not report.overall_success:
+            # This branch only hits when strict=False; with strict=True
+            # an exception will have been raised.
+            logger.error("Azure auth verification FAILED")
+            sys.exit(1)
+    except RuntimeError as e:
+        logger.error(f"❌ Startup failed: {e}")
+        # Exit with non-zero so K8s restarts the pod (likely with backoff)
+        sys.exit(1)
+    except Exception as e:
+        logger.exception(f"❌ Unexpected startup error: {e}")
+        sys.exit(1)
+    
+    # ===== Phase 3: Load config =====
+    try:
+        settings = get_settings()
+        logging.getLogger().setLevel(settings.log_level)
+        logger.info(f"Config loaded (model={settings.openai_model})")
+    except Exception as e:
+        logger.exception(f"❌ Config load failed: {e}")
+        sys.exit(1)
+    
+    # ===== Phase 4: Warm up dependencies =====
+    try:
+        get_cache()
+        from agent import get_agent
+        get_agent()
+        logger.info("✅ Agent ready — accepting traffic")
+    except Exception as e:
+        logger.exception(f"❌ Agent warm-up failed: {e}")
+        sys.exit(1)
+    
+    yield  # ← App is running
+    
+    logger.info("👋 Shutting down")
 
 
-app = FastAPI(title="Weather Agent API", version="1.3.0", lifespan=lifespan)
+app = FastAPI(title="Weather Agent API", version="1.4.0", lifespan=lifespan)
 logger = logging.getLogger(__name__)
 
 
-class WeatherQuery(BaseModel):
-    query: str = Field(..., min_length=1, max_length=500)
-    bypass_cache: bool = False
-
-
-class WeatherResponse(BaseModel):
-    answer: str
-    latency_ms: int
-    cached: bool = False
-    model_used: str
-
-
-@app.get("/")
-def root():
-    return {"service": "weather-agent", "status": "ok"}
-
+# ===== Health & readiness endpoints =====
 
 @app.get("/health")
 def health():
+    """Liveness probe — process is alive."""
     return {"status": "healthy"}
 
 
 @app.get("/ready")
 def ready():
-    try:
-        settings = get_settings()
-        return {
-            "status": "ready",
-            "model": settings.openai_model,
-            "cache_backend": settings.cache_backend,
-            "app_config": settings.use_app_configuration,
-            "features": {
-                "response_cache": settings.feature_response_cache,
-                "tool_cache": settings.feature_tool_cache,
-                "streaming": settings.feature_streaming,
-                "strict_mode": settings.feature_strict_mode,
+    """Readiness probe — pod can serve traffic.
+    
+    Returns 503 if Azure auth checks haven't passed.
+    """
+    report = get_auth_report()
+    if report is None or not report.overall_success:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "not_ready",
+                "reason": "Azure authentication not verified",
+                "failed_checks": [
+                    {"name": c.name, "error": c.error}
+                    for c in (report.failed_checks if report else [])
+                ],
             },
+        )
+    
+    settings = get_settings()
+    return {
+        "status": "ready",
+        "model": settings.openai_model,
+        "azure": {
+            "app_config": settings.use_app_configuration,
+            "key_vault": settings.use_key_vault,
+            "identity": report.identity_info,
+        },
+    }
+
+
+@app.get("/auth/status")
+def auth_status():
+    """Show the Azure authentication verification report."""
+    report = get_auth_report()
+    if report is None:
+        return {"status": "not_yet_verified"}
+    return {
+        "overall_success": report.overall_success,
+        "identity": report.identity_info,
+        "checks": [
+            {
+                "name": c.name,
+                "success": c.success,
+                "duration_ms": c.duration_ms,
+                "detail": c.detail,
+                "error": c.error,
+            }
+            for c in report.checks
+        ],
+    }
+
+
+@app.post("/auth/verify")
+def reverify_auth():
+    """Manually re-run the auth verification (useful after credential rotation)."""
+    try:
+        report = verify_azure_auth(strict=False)
+        return {
+            "overall_success": report.overall_success,
+            "checks_passed": len([c for c in report.checks if c.success]),
+            "checks_total": len(report.checks),
         }
     except Exception as e:
-        raise HTTPException(status_code=503, detail=str(e))
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/ask", response_model=WeatherResponse)
 def ask_weather(payload: WeatherQuery):
