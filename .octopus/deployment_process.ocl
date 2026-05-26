@@ -44,7 +44,7 @@ process_template "deploy-agent" {
     }
 
     parameter "ProcessTemplate.ServiceAccount.ClientId" {
-        value = "e8590f2a-039b-4e40-97c2-faf17728b579"
+        value = "16d9e231-4ad9-4db4-b3ae-04b98fe0fc0d"
     }
 
     parameter "ProcessTemplate.Worker.Pool" {
