@@ -55,3 +55,13 @@ process_template "deploy-agent" {
         value = "Feeds-1028"
     }
 }
+
+process_template "run-a-process-template" {
+    name = "Run a Process Template"
+    process_template_slug = "container-post-deployment-steps"
+    version_mask = "1.0.X"
+
+    parameter "ProcessTemplate.Worker.Pool" {
+        value = "WorkerPools-24"
+    }
+}
