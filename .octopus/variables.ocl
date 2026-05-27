@@ -62,11 +62,11 @@ variable "config:display:default-temperature-unit" {
 
 variable "config:log-level" {
     value "INFO" {
-        environment = ["production", "qa"]
+        environment = ["production"]
     }
 
     value "DEBUG" {
         description = ""
-        environment = ["development"]
+        environment = ["development", "qa"]
     }
 }
